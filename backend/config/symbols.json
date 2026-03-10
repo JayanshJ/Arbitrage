@@ -1,0 +1,22 @@
+{
+  "pairs": [
+    {
+      "unified": "BTC-USD",
+      "binance": "btcusdt",
+      "kraken": "XBT/USD",
+      "coinbase": "BTC-USD"
+    },
+    {
+      "unified": "ETH-USD",
+      "binance": "ethusdt",
+      "kraken": "ETH/USD",
+      "coinbase": "ETH-USD"
+    },
+    {
+      "unified": "SOL-USD",
+      "binance": "solusdt",
+      "kraken": "SOL/USD",
+      "coinbase": "SOL-USD"
+    }
+  ]
+}
