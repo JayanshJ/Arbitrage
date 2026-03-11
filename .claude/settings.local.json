@@ -54,7 +54,8 @@
       "Bash(bash -x /Users/jayansh/Developer/Personal/Arbitrage/research.sh status)",
       "Bash(/Users/jayansh/Developer/Personal/Arbitrage/research.sh optimize:*)",
       "Bash(/Users/jayansh/Developer/Personal/Arbitrage/research.sh report:*)",
-      "Bash(.venv/bin/python -m src.main --help)"
+      "Bash(.venv/bin/python -m src.main --help)",
+      "Bash(.venv/bin/python -c \"from src.engine.pairs_engine import PairsEngine, PairsState, REVALIDATION_INTERVAL, _TICKS_PER_MINUTE, _MIN_BARS_FOR_VALIDATION, _MAX_CONSECUTIVE_FAILURES; print\\(''Import OK''\\); s = PairsState\\(''ETH-USD'',''SOL-USD''\\); print\\(f''val_window={s.val_window}  consecutive_failures={s.consecutive_failures}''\\)\")"
     ]
   }
 }

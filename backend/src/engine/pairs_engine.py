@@ -52,6 +52,16 @@ _UPDATE_INTERVAL_S: float = 0.5
 # Re-run cointegration after this many state-update ticks.
 REVALIDATION_INTERVAL: int = 500   # ≈ every 4 min at 0.5 s/tick
 
+# Number of ticks per 1-minute bar at 0.5 s/tick.
+_TICKS_PER_MINUTE: int = 120  # 60 s / 0.5 s
+
+# Minimum 1-minute bars required before running cointegration tests.
+_MIN_BARS_FOR_VALIDATION: int = 60   # 1 hour of 1-min bars
+
+# Pair must fail this many consecutive revalidations before being disabled.
+# At REVALIDATION_INTERVAL=500 ticks (4 min) this means 12 min of bad data.
+_MAX_CONSECUTIVE_FAILURES: int = 3
+
 
 # --------------------------------------------------------------------------- #
 # Data classes                                                                  #
@@ -132,7 +142,7 @@ class PairsState:
         symbol_a: str,
         symbol_b: str,
         z_window: int = 60,
-        val_window: int = 300,
+        val_window: int = 7200,   # 1 hour at 0.5 s/tick
     ) -> None:
         self.symbol_a = symbol_a
         self.symbol_b = symbol_b
@@ -146,6 +156,7 @@ class PairsState:
         self.validation: Optional[ValidationResult] = None
         self._tick_count: int = 0
         self.disabled: bool = False
+        self.consecutive_failures: int = 0
 
     def update(self, price_a: float, price_b: float) -> None:
         if price_a <= 0 or price_b <= 0:
@@ -155,17 +166,37 @@ class PairsState:
         self._tick_count += 1
 
     def maybe_revalidate(self) -> bool:
-        """Run cointegration test if due.  Returns True when newly run."""
+        """Run cointegration test if due.  Returns True when newly run.
+
+        Cointegration tests are designed for daily/hourly price series, not
+        sub-second ticks.  Running them on raw 0.5 s data introduces severe
+        microstructure noise and almost always produces spurious failures.
+
+        Fix: downsample the stored tick series to 1-minute bars (every
+        _TICKS_PER_MINUTE ticks) before calling validate_pair(), and require
+        _MIN_BARS_FOR_VALIDATION bars (1 hour) before the first test fires.
+        """
         if self._tick_count % REVALIDATION_INTERVAL != 0:
             return False
-        if len(self._prices_a) < 60:
+
+        # Downsample raw ticks → 1-minute bars
+        raw_a = list(self._prices_a)
+        raw_b = list(self._prices_b)
+        pa = np.array(raw_a[::_TICKS_PER_MINUTE])
+        pb = np.array(raw_b[::_TICKS_PER_MINUTE])
+
+        if len(pa) < _MIN_BARS_FOR_VALIDATION:
+            logger.debug(
+                "Skip revalidation %s — only %d min-bars (need %d)",
+                self.pair_id, len(pa), _MIN_BARS_FOR_VALIDATION,
+            )
             return False
-        pa = np.array(self._prices_a)
-        pb = np.array(self._prices_b)
-        self.validation = validate_pair(pa, pb)
+
+        # tick_interval_seconds=60 because each bar now represents 1 minute
+        self.validation = validate_pair(pa, pb, tick_interval_seconds=60.0)
         logger.info(
-            "Revalidated %s: valid=%s p=%.3f β=%.3f t½=%.1fh — %s",
-            self.pair_id, self.validation.is_valid,
+            "Revalidated %s: valid=%s bars=%d p=%.3f β=%.3f t½=%.1fh — %s",
+            self.pair_id, self.validation.is_valid, len(pa),
             self.validation.p_value, self.validation.hedge_ratio,
             self.validation.half_life_hours, self.validation.reason,
         )
@@ -277,7 +308,7 @@ class PairsEngine:
         entry_z_threshold: float = 2.5,
         exit_z_threshold: float = 0.3,
         z_window: int = 60,
-        val_window: int = 300,
+        val_window: int = 7200,   # 1 hour at 0.5 s/tick
         cooldown_seconds: float = 120.0,
     ) -> None:
         self.db_engine = db_engine
@@ -369,15 +400,33 @@ class PairsEngine:
 
     async def _on_revalidation(self, pair_id: str, state: PairsState) -> None:
         if state.validation and not state.validation.is_valid:
-            state.disabled = True
-            logger.warning("Pair %s disabled — %s", pair_id, state.validation.reason)
-            if self.alerts:
-                await self.alerts.on_pair_disabled(pair_id, state.validation.reason)
-            pos = self._positions.get(pair_id)
-            if pos:
-                pa, pb = state.current_prices
-                await self._close(pos, pa, pb, state.z_score or 0.0, "revalidation_fail")
+            state.consecutive_failures += 1
+            logger.warning(
+                "Pair %s validation failed (%d/%d): %s",
+                pair_id, state.consecutive_failures,
+                _MAX_CONSECUTIVE_FAILURES, state.validation.reason,
+            )
+            # Only disable after N consecutive failures to avoid reacting to
+            # a single noisy test result.
+            if state.consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                state.disabled = True
+                logger.error(
+                    "Pair %s disabled after %d consecutive failures.",
+                    pair_id, state.consecutive_failures,
+                )
+                if self.alerts:
+                    await self.alerts.on_pair_disabled(pair_id, state.validation.reason)
+                pos = self._positions.get(pair_id)
+                if pos:
+                    pa, pb = state.current_prices
+                    await self._close(pos, pa, pb, state.z_score or 0.0, "revalidation_fail")
         elif state.validation and state.validation.is_valid:
+            if state.consecutive_failures > 0:
+                logger.info(
+                    "Pair %s recovered after %d failure(s) — re-enabled.",
+                    pair_id, state.consecutive_failures,
+                )
+            state.consecutive_failures = 0
             state.disabled = False
 
     # ── In-position risk checks ───────────────────────────────────────────── #
@@ -591,6 +640,7 @@ class PairsEngine:
                 "symbol_a": state.symbol_a,
                 "symbol_b": state.symbol_b,
                 "disabled": state.disabled,
+                "consecutive_failures": state.consecutive_failures,
                 "is_ready": state.is_ready,
                 "data_points": state.data_points,
                 "z_window": state.z_window,
