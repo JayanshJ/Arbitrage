@@ -154,7 +154,7 @@ else
 fi
 
 info "Waiting for API to be ready..."
-if wait_for_http "http://localhost:8000/api/stats" "Backend API" 20; then
+if wait_for_http "http://localhost:8000/api/pairs/status" "Backend API" 25; then
   success "Backend API live at http://localhost:8000"
 else
   err "Backend failed — last 30 lines of $BACKEND_LOG:"

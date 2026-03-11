@@ -36,7 +36,14 @@
       "Bash(npx tsc:*)",
       "Bash(.venv/bin/python -c \"import statsmodels; import aiohttp; print\\(''statsmodels'', statsmodels.__version__, ''| aiohttp'', aiohttp.__version__\\)\")",
       "Bash(.venv/bin/pytest tests/ -q --tb=short)",
-      "Bash(chmod +x /Users/jayansh/Developer/Personal/Arbitrage/start.sh)"
+      "Bash(chmod +x /Users/jayansh/Developer/Personal/Arbitrage/start.sh)",
+      "Bash(rm src/engine/arbitrage.py src/engine/paper_trader.py)",
+      "Bash(rm tests/test_engine.py tests/test_paper_trader.py)",
+      "Bash(rm components/StatsCards.tsx components/SpreadChart.tsx components/LiveTickers.tsx components/TradesTable.tsx components/BalanceChart.tsx)",
+      "Bash(rm lib/useSpreadStream.ts)",
+      "Bash(.venv/bin/python -c \"from src.main import main; print\\(''imports OK''\\)\")",
+      "Bash(psql arbitrage:*)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql arbitrage:*)"
     ]
   }
 }
