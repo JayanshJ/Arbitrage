@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/**)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(timeout 15 python -m src.main --symbols BTC-USD)",
+      "Bash(gtimeout 15 python -m src.main --symbols BTC-USD)",
+      "Bash(python -c \":*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh auth:*)",
+      "Bash(redis-cli ping:*)",
+      "Bash(brew services:*)",
+      "Bash(brew install:*)",
+      "Bash(psql --version)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/createdb arbitrage:*)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql -d arbitrage -c \"SELECT 1;\")",
+      "Bash(npm --version)",
+      "Bash(npx create-next-app@latest frontend --ts --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --use-npm)",
+      "Bash(pip list:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s --max-time 2 http://localhost:3000/api/spreads/stream)",
+      "Bash(pkill -f \"python -m src.main\")",
+      "Bash(curl -s http://localhost:8000/api/stats)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Balance: {d[\"\"balance\"\"]}, Tickers: {len\\(d[\"\"tickers\"\"]\\)} symbols''''\\)\")",
+      "Bash(find /Users/jayansh/Developer/Personal/Arbitrage -maxdepth 4 -type d -not -path */node_modules* -not -path */.venv* -not -path */.next* -not -path */__pycache__* -not -path */.pytest_cache*)"
+    ]
+  }
+}

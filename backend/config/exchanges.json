@@ -1,0 +1,18 @@
+{
+  "exchanges": {
+    "binance": {
+      "maker_fee_pct": 0.10,
+      "taker_fee_pct": 0.10
+    },
+    "kraken": {
+      "maker_fee_pct": 0.16,
+      "taker_fee_pct": 0.26
+    },
+    "coinbase": {
+      "maker_fee_pct": 0.40,
+      "taker_fee_pct": 0.60
+    }
+  },
+  "slippage_pct": 0.10,
+  "min_profit_pct": 0.10
+}
