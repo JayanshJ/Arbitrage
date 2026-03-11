@@ -29,7 +29,14 @@
       "Bash(pkill -f \"python -m src.main\")",
       "Bash(curl -s http://localhost:8000/api/stats)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Balance: {d[\"\"balance\"\"]}, Tickers: {len\\(d[\"\"tickers\"\"]\\)} symbols''''\\)\")",
-      "Bash(find /Users/jayansh/Developer/Personal/Arbitrage -maxdepth 4 -type d -not -path */node_modules* -not -path */.venv* -not -path */.next* -not -path */__pycache__* -not -path */.pytest_cache*)"
+      "Bash(find /Users/jayansh/Developer/Personal/Arbitrage -maxdepth 4 -type d -not -path */node_modules* -not -path */.venv* -not -path */.next* -not -path */__pycache__* -not -path */.pytest_cache*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(.venv/bin/python -c \"import numpy; print\\(''numpy'', numpy.__version__\\)\")",
+      "Bash(.venv/bin/python -c \":*)",
+      "Bash(npx tsc:*)",
+      "Bash(.venv/bin/python -c \"import statsmodels; import aiohttp; print\\(''statsmodels'', statsmodels.__version__, ''| aiohttp'', aiohttp.__version__\\)\")",
+      "Bash(.venv/bin/pytest tests/ -q --tb=short)",
+      "Bash(chmod +x /Users/jayansh/Developer/Personal/Arbitrage/start.sh)"
     ]
   }
 }

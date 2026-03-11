@@ -28,6 +28,10 @@ from .exchanges import BinanceWS, KrakenWS, CoinbaseWS
 from .cache.redis_cache import RedisCache
 from .engine.arbitrage import ArbitrageEngine, ArbitrageOpportunity
 from .engine.paper_trader import PaperTrader
+from .engine.pairs_engine import PairsEngine
+from .engine.real_costs import RealCostModel
+from .engine.risk_manager import RiskManager
+from .alerts.telegram_alerts import TelegramAlerts
 from .db.session import init_db, close_db
 from .api.server import app as api_app, set_dependencies
 
@@ -41,13 +45,15 @@ opp_count = 0
 _cache: Optional[RedisCache] = None
 _engine: Optional[ArbitrageEngine] = None
 _trader: Optional[PaperTrader] = None
+_pairs_engine: Optional[PairsEngine] = None
 _symbol_map: Optional[SymbolMapping] = None
 
 
 async def on_ticker(ticker: Ticker) -> None:
     """Callback invoked on every ticker update from any exchange.
 
-    Pipeline: cache ticker -> scan for arbitrage -> execute paper trade.
+    Pipeline: cache ticker -> scan for arbitrage -> execute paper trade
+              -> feed pairs engine for statistical arbitrage.
     """
     global opp_count
 
@@ -69,6 +75,10 @@ async def on_ticker(ticker: Ticker) -> None:
                     _print_trade(result)
                 elif result.skip_reason:
                     logger.debug("Trade skipped: %s", result.skip_reason)
+
+    # Feed mid-price to pairs engine for statistical arbitrage
+    if _pairs_engine:
+        await _pairs_engine.on_ticker(ticker.symbol, ticker.mid_price)
 
     total = sum(stats.values())
     if total % 200 == 0:
@@ -138,7 +148,7 @@ async def run(
     initial_balance: float = 10_000.0,
     api_port: int = 8000,
 ) -> None:
-    global _cache, _engine, _trader, _symbol_map
+    global _cache, _engine, _trader, _pairs_engine, _symbol_map
 
     _symbol_map = SymbolMapping.from_config()
 
@@ -168,7 +178,7 @@ async def run(
     else:
         _engine = None
 
-    # Initialize database + paper trader
+    # Initialize database + paper trader + pairs engine
     try:
         db_engine = await init_db(db_url)
         _trader = PaperTrader(
@@ -176,6 +186,21 @@ async def run(
             initial_balance=initial_balance,
         )
         await _trader.initialize()
+
+        # Pairs engine: separate $5k balance with full risk + cost model
+        pairs_balance = 5_000.0
+        risk_mgr = RiskManager(initial_capital=pairs_balance)
+        alerts = TelegramAlerts()
+        risk_mgr.set_alerts(alerts)
+
+        _pairs_engine = PairsEngine(
+            db_engine=db_engine,
+            risk_manager=risk_mgr,
+            cost_model=RealCostModel(),
+            alerts=alerts,
+            initial_balance=pairs_balance,
+        )
+        await _pairs_engine.initialize()
     except Exception as exc:
         logger.error(
             "Failed to connect to database at %s: %s. "
@@ -183,6 +208,7 @@ async def run(
             db_url, exc,
         )
         _trader = None
+        _pairs_engine = None
 
     # Start exchange WebSocket clients
     active_exchanges = exchanges or list(Exchange)
@@ -201,7 +227,7 @@ async def run(
     # Start API server
     import uvicorn
 
-    set_dependencies(_cache, _trader)
+    set_dependencies(_cache, _trader, _pairs_engine)
     config = uvicorn.Config(
         api_app, host="0.0.0.0", port=api_port,
         log_level="warning",
@@ -229,7 +255,8 @@ async def run(
         f"  Redis: {'connected' if _cache else 'NOT CONNECTED'}\n"
         f"  Database: {'connected' if _trader else 'NOT CONNECTED'}\n"
         f"  API Server: http://localhost:{api_port}\n"
-        f"  Starting Balance: ${initial_balance:,.2f}\n"
+        f"  Cross-Exchange Arb Balance: ${initial_balance:,.2f}\n"
+        f"  Statistical Arb (Pairs) Balance: $5,000.00\n"
         f"  Press Ctrl+C to stop\n"
         f"{'='*70}\n"
     )

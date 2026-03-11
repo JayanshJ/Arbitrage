@@ -86,6 +86,72 @@ class PaperTrade(Base):
         )
 
 
+class PairsTrade(Base):
+    """A simulated statistical arbitrage (pairs) trade.
+
+    Each row is a complete round-trip: entry when |z-score| > 2σ,
+    exit when |z-score| < 0.5σ (mean reversion).  Exit columns are
+    NULL until the position is closed.
+    """
+
+    __tablename__ = "pairs_trades"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Pair identity
+    pair_id = Column(String(50), nullable=False, index=True)  # "ETH-USD:SOL-USD"
+    symbol_a = Column(String(20), nullable=False)
+    symbol_b = Column(String(20), nullable=False)
+
+    # Direction: "long_a_short_b" or "short_a_long_b"
+    direction = Column(String(30), nullable=False)
+
+    # --- Entry leg ---
+    entry_z_score = Column(Float, nullable=False)
+    entry_price_a = Column(Float, nullable=False)
+    entry_price_b = Column(Float, nullable=False)
+    entry_time = Column(DateTime(timezone=True), nullable=False)
+    notional_usd = Column(Float, nullable=False)      # USD allocated to leg A
+
+    # Validated pair stats at entry time
+    hedge_ratio = Column(Float, nullable=True)        # OLS β: spread = A − β·B
+    half_life_hours = Column(Float, nullable=True)    # OU mean-reversion speed
+    qty_a = Column(Float, nullable=True)              # units of A entered
+    qty_b = Column(Float, nullable=True)              # units of B entered
+
+    # --- Exit leg (NULL until closed) ---
+    exit_z_score = Column(Float, nullable=True)
+    exit_price_a = Column(Float, nullable=True)
+    exit_price_b = Column(Float, nullable=True)
+    exit_time = Column(DateTime(timezone=True), nullable=True)
+
+    # --- P&L (real costs deducted) ---
+    pnl_a = Column(Float, nullable=True)              # USD gross on leg A
+    pnl_b = Column(Float, nullable=True)              # USD gross on leg B
+    net_pnl = Column(Float, nullable=True)            # after fees+funding+slippage
+    hold_seconds = Column(Float, nullable=True)
+    pairs_balance_after = Column(Float, nullable=True)
+
+    # "exit_signal" | "stop_loss" | "max_hold" | "revalidation_fail"
+    close_reason = Column(String(30), nullable=True)
+
+    # "open" | "closed"
+    status = Column(String(20), nullable=False, default="open")
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<PairsTrade #{self.id} {self.pair_id} "
+            f"{self.direction} z={self.entry_z_score:+.2f} "
+            f"{'net=$' + f'{self.net_pnl:+.2f}' if self.net_pnl is not None else 'open'}>"
+        )
+
+
 class Balance(Base):
     """Periodic snapshot of the virtual trading balance.
 

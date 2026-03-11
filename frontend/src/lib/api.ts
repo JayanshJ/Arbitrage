@@ -1,4 +1,4 @@
-import type { Trade, BalanceSnapshot, Stats } from "./types";
+import type { Trade, BalanceSnapshot, Stats, PairsTrade } from "./types";
 
 const API_BASE = "/api";
 
@@ -24,5 +24,16 @@ export async function fetchBalances(
 export async function fetchStats(): Promise<Stats> {
   const res = await fetch(`${API_BASE}/stats`);
   if (!res.ok) throw new Error(`Failed to fetch stats: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchPairsTrades(
+  limit = 50,
+  offset = 0
+): Promise<{ total: number; trades: PairsTrade[] }> {
+  const res = await fetch(
+    `${API_BASE}/pairs/trades?limit=${limit}&offset=${offset}`
+  );
+  if (!res.ok) throw new Error(`Failed to fetch pairs trades: ${res.status}`);
   return res.json();
 }

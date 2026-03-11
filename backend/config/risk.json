@@ -1,0 +1,41 @@
+{
+  "_comment": "Risk manager parameters for the pairs trading engine. Edit and restart to take effect.",
+
+  "initial_capital": 5000.0,
+
+  "max_drawdown_pct": 0.15,
+  "_max_drawdown_pct": "Halt ALL trading if equity falls more than 15 % from its peak.",
+
+  "max_position_pct": 0.20,
+  "_max_position_pct": "Never allocate more than 20 % of current balance as notional per trade.",
+
+  "max_open_positions": 2,
+  "_max_open_positions": "Maximum number of concurrent open pairs positions.",
+
+  "max_hold_days": 7.0,
+  "_max_hold_days": "Force-close any position still open after this many days.",
+
+  "stop_loss_z": 4.0,
+  "_stop_loss_z": "Close immediately when |z-score| reaches this level (pair diverging).",
+
+  "entry_z_threshold": 2.5,
+  "_entry_z_threshold": "Open a position when |z-score| crosses this threshold.",
+
+  "exit_z_threshold": 0.3,
+  "_exit_z_threshold": "Close a profitable position when |z-score| reverts below this level.",
+
+  "cooldown_seconds": 120,
+  "_cooldown_seconds": "Minimum seconds between consecutive trades on the same pair.",
+
+  "stale_price_seconds": 2.0,
+  "_stale_price_seconds": "Reject tickers older than this many seconds.",
+
+  "z_window": 60,
+  "_z_window": "Rolling window length (ticks) for live z-score computation.",
+
+  "val_window": 300,
+  "_val_window": "Longer window (ticks) used for cointegration / validation tests.",
+
+  "revalidation_interval": 500,
+  "_revalidation_interval": "Re-run cointegration test every N ticks (~4 min at 0.5 s/tick)."
+}

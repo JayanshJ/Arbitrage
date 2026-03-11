@@ -11,6 +11,9 @@ dependencies = [
     "alembic>=1.13",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
+    "numpy>=1.24",
+    "statsmodels>=0.14",
+    "aiohttp>=3.9",
 ]
 
 [project.optional-dependencies]
