@@ -6,11 +6,11 @@
   - Local:        http://localhost:3000
 
  ✓ Starting...
- ✓ Ready in 1304ms
+ ✓ Ready in 1722ms
  ○ Compiling / ...
- ✓ Compiled / in 768ms (1491 modules)
- GET / 200 in 933ms
- GET / 200 in 50ms
-(node:9291) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+ ✓ Compiled / in 744ms (1491 modules)
+ GET / 200 in 901ms
+ GET / 200 in 36ms
+(node:11132) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [?25h

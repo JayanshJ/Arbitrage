@@ -122,6 +122,7 @@ collect)
   cd "$BACKEND"
   exec "$PY" -m src.main \
     --record-only \
+    --exchanges kraken coinbase \
     --data-dir "$DATA_DIR" \
     --log-level INFO
   ;;
