@@ -43,7 +43,18 @@
       "Bash(rm lib/useSpreadStream.ts)",
       "Bash(.venv/bin/python -c \"from src.main import main; print\\(''imports OK''\\)\")",
       "Bash(psql arbitrage:*)",
-      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql arbitrage:*)"
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql arbitrage:*)",
+      "Bash(bash -n /Users/jayansh/Developer/Personal/Arbitrage/research.sh)",
+      "Bash(.venv/bin/python -c \"import statsmodels, numpy, aiohttp; print\\(''deps OK''\\)\")",
+      "Bash(./research.sh help:*)",
+      "Bash(chmod +x /Users/jayansh/Developer/Personal/Arbitrage/research.sh)",
+      "Bash(/Users/jayansh/Developer/Personal/Arbitrage/research.sh help:*)",
+      "Bash(/Users/jayansh/Developer/Personal/Arbitrage/research.sh status:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(bash -x /Users/jayansh/Developer/Personal/Arbitrage/research.sh status)",
+      "Bash(/Users/jayansh/Developer/Personal/Arbitrage/research.sh optimize:*)",
+      "Bash(/Users/jayansh/Developer/Personal/Arbitrage/research.sh report:*)",
+      "Bash(.venv/bin/python -m src.main --help)"
     ]
   }
 }

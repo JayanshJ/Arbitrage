@@ -70,11 +70,13 @@ fi
 
 # ── Tick file discovery ──────────────────────────────────────────────────────
 count_tick_files() {
-  ls "$DATA_DIR"/ticks_*.csv 2>/dev/null | wc -l | tr -d ' '
+  [ -d "$DATA_DIR" ] || { echo 0; return 0; }
+  find "$DATA_DIR" -maxdepth 1 -name 'ticks_*.csv' 2>/dev/null | wc -l | tr -d ' '
 }
 
 tick_file_args() {
-  ls "$DATA_DIR"/ticks_*.csv 2>/dev/null | tr '\n' ' '
+  [ -d "$DATA_DIR" ] || return 0
+  find "$DATA_DIR" -maxdepth 1 -name 'ticks_*.csv' 2>/dev/null | sort | tr '\n' ' '
 }
 
 require_tick_data() {
@@ -129,7 +131,6 @@ optimize)
   header "Parameter Optimisation"
   require_tick_data
 
-  TICK_FILES
   TICK_FILES=$(tick_file_args)
 
   echo
@@ -245,12 +246,12 @@ status)
   else
     success "$N day(s) of tick data in $DATA_DIR/"
     echo
-    for f in "$DATA_DIR"/ticks_*.csv; do
+    while IFS= read -r f; do
       ROWS=$(wc -l < "$f")
       ROWS=$((ROWS - 1))  # subtract header
       DATE=$(basename "$f" | sed 's/ticks_//' | sed 's/.csv//')
       printf "  %-14s  %s rows\n" "$DATE" "$(printf '%d' $ROWS | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta')"
-    done
+    done < <(find "$DATA_DIR" -maxdepth 1 -name 'ticks_*.csv' 2>/dev/null | sort)
     echo
     if [ "$N" -lt 7 ]; then
       warn "Collect at least 7 days before optimising (more = better)."
